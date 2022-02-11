@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <title>Build JSON</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+.none{
+  display:none;
+}
+input {
+    outline: none;
+}
+#areaGen {
+    text-align: center;
+    margin-bottom: 60px;
+}
+#inLink {
+    width: 90%;
+    height: 24px;
+    margin-bottom: 5px;
+    padding-left: 5px;
+}
+#getLink, #getDbRule {
+    padding: 0 25px;
+    height: 30px;
+    cursor: pointer;
+    margin-bottom: 25px;
+}
+#outLink, #dbRule {
+    width: 95%;
+    height: 450px;
+    margin-bottom: 5px;
+    padding-left: 5px;
+}
+#copy {
+    padding: 0 25px;
+    height: 30px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+#inDomain {
+    height: 20px;
+    padding-left: 5px;
+    width: 80%;
+}
+#replace {
+    padding: 0 25px;
+    height: 30px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    margin-top: 5px;
+}
+td, th {
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0 0 0px 1px black;
+}
+#areaOutDb {
+    display: grid;
+    margin: 5px 0;
+}
+.settingScrapt,buton.lookListLink {
+    cursor: pointer;
+}
+td.nameDomain {
+    text-align: left;
+    padding-left: 10px;
+}
+#modalPopUp {
+    position: fixed;
+    top: 0px;
+    z-index: 128;
+    width: 80%;
+    border-radius: 10px;
+    left: 10%;
+}
+.areaSettingPopup {
+    background-color: #e1e1f0;
+    margin-top: 25px;
+    padding: 10px;
+    overflow: auto;
+    height: 600px;
+}
+.areaSubSettingPopUp {
+    margin-bottom: 10px;
+    background-color: #d0d0d9;
+    border-radius: 10px;
+    padding-bottom: 10px;
+}
+.areaCloseModalPopUp {
+    right: 0;
+    position: absolute;
+    cursor: pointer;
+    background-color: #fa5151d4;
+}
+.titleSetting {
+    font-size: 20px;
+    font-weight: 600;
+    background-color: #7ef289;
+    padding: 5px;
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+    margin-bottom: 5px;
+}
+.areaSettingFix {
+    margin-left: 10px;
+    font-size: 18px;
+}
+#TS,#TS1,#TS2,#TS3, #TStype,#TStype1,#TStype2,#TStype3 {
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+#valueTS,#valueTS1,#valueTS2,#valueTS3,#valueAT {
+    width: 70%;
+    padding-left: 10px;
+    height: 25px;
+    font-size: 15px;
+}
+#pTsType,#pTsType1,#pTsType2,#pTsType3 {
+    margin: 0 10px;
+}
+#positionTsType,#positionTsType1,#positionTsType2,#positionTsType3 {
+    width: 40px;
+    text-align: center;
+}
+code#outCodeTS {
+    white-space: pre;
+    font-size: 15px;
+    font-weight: 600;
+}
+.buttoncheck {
+    padding: 2px 25px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+    background-color: #4af0f2;
+    border-radius: 10px;
+    outline: none;
+}
+.areaStatusTargetUrl {
+    padding-left: 10px;
+    margin-bottom: 10px;
+}
+.profilTarget {
+    font-size: 18px;
+    margin: 2px 0px;
+}
+.buttonUpdate {
+    padding: 2px 25px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #0f7ca8;
+    border-radius: 5px;
+    outline: none;
+    margin-left: 10px;
+    color: #fff6f6;
+}
+    </style>
+  </head>
+  <body>
+    <div id="modalPopUp"></div>
+    <div id="areaGen">
+      <div><textarea id="dbRule" class="none"></textarea></div>
+      <div><button id="getDbRule">Load Database Rule</button></div>
+
+      <div id="areaOutDb">
+        <table>
+          <tbody id="dbSlotTable"></tbody>
+        </table>
+      </div>
+
+      <div>Sitemap Target : <input id="inLink" placeholder="insert Link Xml" value="https://www.yourdomain.com/sitemap.xml"></input></div>
+      <div><button id="getLink">Build</button></div>
+      <div><textarea id="outLink"></textarea></div>
+      <div><button id="copy">copy</button></div>
+      <div>Remove All String : <input id="inDomain" placeholder="insert String"></input></div>
+      <div><button id="replace">Remove</button></div>
+    </div>
+
+<script>
+var dbFeed={};
+document.getElementById("getDbRule").addEventListener("click",function(){
+  document.getElementById("dbSlotTable").innerHTML="";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/rules.json", true);
+  xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4) {
+        if(xhr.status == 200) {
+          document.getElementById("dbRule").value=xhr.responseText;
+          dbFeed=JSON.parse(xhr.responseText)
+          next1(dbFeed);
+        };
+      };
+  };
+  xhr.send();
+});
+
+function next1(data){
+  var db=data;
+  var dbDomain=db.domain;
+  var dbCategory=db.category;
+  var dbProtocol=db.type;
+  var dbPermasplit=db.permaSplit;
+  var domSlot="";
+  //---- membuat slot tabel
+  for(var i=0;i<dbDomain.length;i++){
+    var listLink=db[i].listLink.length;
+    domSlot=domSlot+`<tr>
+              <td class="nameDomain">`+dbDomain[i]+`</td>
+              <td class="pageNumber">`+dbCategory[i]+`</td>
+              <td class="domainProtocol">`+dbProtocol[i]+`</td>
+              <td class="splitPermalink">`+dbPermasplit[i]+`</td>
+              <td class="listLink">`+listLink+`<buton class="lookListLink"><svg style="width: 30px;height: 25px;margin-bottom: -8px;margin-left: 5px;" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C21.27,16.39 17,19.5 12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5M3.18,12C4.83,15.36 8.24,17.5 12,17.5C15.76,17.5 19.17,15.36 20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12Z"></path>
+</svg></button></td>
+              <td class="settingScrapt" onclick="showSetting('`+i+`')"><svg style="width:24px;height:24px" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+</svg></td>
+            </tr>`;
+  };
+  document.getElementById("dbSlotTable").innerHTML=`<tr class="titleMeta">
+              <th class="dbMeta">Name Domain</th>
+              <th class="dbMeta">Page Number</th>
+              <th class="dbMeta">Protocol</th>
+              <th class="dbMeta">Position Split "/" Permalink</th>
+              <th class="dbMeta">List Link</th>
+              <th class="dbMeta">Setting Grabber</th>
+            </tr>`+domSlot;
+  console.log(data)
+};
+
+function showSetting(data){
+  var dbSetting=dbFeed[data].setting;
+  document.getElementById("modalPopUp").innerHTML=`
+    <button onclick="closeMOdalPopUp()" class="areaCloseModalPopUp">X</button>
+    <div class="areaSettingPopup">
+      <div class="areaStatusTargetUrl">
+        <div class="profilTarget">Name Domain : <span>www.maskoding.com</span></div>
+        <div class="profilTarget">Page Position : <span>1</span></div>
+        <div class="profilTarget">Protocol : <span>https</span></div>
+        <div class="profilTarget">Position Split "/" Permalink : <span>3</span></div>
+        <div class="profilTarget">All Link : <span>128</span><button class="buttonUpdate">Update Link</button></div>
+      </div>
+      <div class="areaSubSettingPopUp">
+        <div class="titleSetting">Setting Grabbing Content</div>
+        <div class="areaSettingFix">
+          <div><label for="TStype">Type Selector :</label>
+          <select id="TStype" data="0" name="TStype" onclick="showHidden('TStype','pTsType','outTStype','outPositionTsType','numberPositionTsType')">
+            <option value="all">Get All</option>
+            <option value="one">Get One</option>
+          </select><span id="pTsType">Position : <input id="positionTsType" onkeyup="changeNumer('positionTsType','numberPositionTsType','TStype')" value="0"/></span></div>
+          <div>Selector : <input id="valueTS" placeholder="insert value selector" onkeyup="changeValueSelector('valueTS','outValueSelector')"/></div>
+          <div><label for="TS">Target Selector :</label>
+          <select id="TS" name="TS" data="" onclick="changeTs('TS','outChangeTs','areaValueTA','valueAT')">
+            <option value="outerHTML">outerHTML</option>
+            <option value="innerHTML">innerHTML</option>
+            <option value="innerText">innerText</option>
+            <option value="valueAttr">getAttrIbute</option>
+          </select></div>
+          <div id="areaValueTA" class="none" >Name Attribute : <input id="valueAT" data="nameTargetAttribute" onkeyup="changeNameAttribute('valueAT','nameTargetAttribute','TS')" placeholder="insert name Attribute"/></div>
+          <div>Code Grabbing : <code id="outCodeTS">.querySelector<span id="outTStype">All</span>("<span id="outValueSelector"></span>")<span id="outPositionTsType">[<span id="numberPositionTsType">0</span>]</span>.<span id="outChangeTs">outerHTML</span></code></div>
+          <div><button class="buttoncheck" onclick="checkGrab('outCodeTS')">CHECK</button></div>
+        </div>
+      </div>
+
+      <div class="areaSubSettingPopUp">
+        <div class="titleSetting">Setting Grabbing Time Publish</div>
+        <div class="areaSettingFix">
+        </div>
+      </div>
+
+      <div class="areaSubSettingPopUp">
+        <div class="titleSetting">Setting Grabbing Description Content</div>
+        <div class="areaSettingFix">
+        </div>
+      </div>
+
+      <div class="areaSubSettingPopUp">
+        <div class="titleSetting">Setting Grabbing Image Content</div>
+        <div class="areaSettingFix">
+        </div>
+      </div>
+
+      <div class="areaSubSettingPopUp">
+        <div class="titleSetting">Setting Grabbing Title Content</div>
+        <div class="areaSettingFix">
+        </div>
+      </div>
+    </div>
+  `;
+  console.log(dbSetting)
+};
+function closeMOdalPopUp(){
+  document.getElementById("modalPopUp").innerHTML=``;
+};
+
+function showHidden(idSelect,idTargetHidden,idOutarget1,idOutarget2,idOutarget3){
+  if(document.getElementById(idSelect).value=="all"){
+    document.getElementById(idTargetHidden).removeAttribute("class");
+    document.getElementById(idOutarget1).innerHTML="All";
+    document.getElementById(idOutarget2).innerHTML=`[<span id="`+idOutarget3+`">`+Number(document.getElementById(idSelect).getAttribute("data"))+`</span>]`;
+  } else if (document.getElementById(idSelect).value=="one"){
+    document.getElementById(idTargetHidden).setAttribute("class","none");
+    document.getElementById(idOutarget1).innerHTML="";
+    document.getElementById(idOutarget2).innerHTML="";
+  }
+};
+
+function changeNumer(idTargetNumber,idTargetChange,idData){
+  document.getElementById(idTargetChange).innerHTML=Number(document.getElementById(idTargetNumber).value);
+  document.getElementById(idData).setAttribute("data",Number(document.getElementById(idTargetNumber).value));
+};
+
+function changeTs(idSourch,idOutChangeTs,idShowAttr,idAttr) {
+  if(document.getElementById(idSourch).value=="valueAttr"){
+    document.getElementById(idOutChangeTs).innerHTML=`getAttribute("<span id="`+document.getElementById(idAttr).getAttribute("data")+`">`+document.getElementById(idSourch).getAttribute("data")+`</span>")`;
+    document.getElementById(idShowAttr).removeAttribute("class");
+  } else {
+  document.getElementById(idOutChangeTs).innerHTML=document.getElementById(idSourch).value;
+  document.getElementById(idShowAttr).setAttribute("class","none");
+  };
+};
+
+function changeValueSelector(idSourch,idTargetValueSelector) {
+  document.getElementById(idTargetValueSelector).innerHTML=document.getElementById(idSourch).value;
+};
+
+function changeNameAttribute(idSourch,idTargetAttribute,idReplace){
+  document.getElementById(idTargetAttribute).innerHTML=document.getElementById(idSourch).value;
+  document.getElementById(idReplace).setAttribute("data",document.getElementById(idSourch).value);
+};
+
+function checkGrab(data){
+  var targetCheckSelector=document.getElementById(data).innerText;
+  console.log(targetCheckSelector)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.getElementById("getLink").addEventListener("click",function(){
+  document.getElementById("outLink").setAttribute("placeholder","Please Wait...");
+  var getUrl=document.getElementById("inLink").value;
+  var xhr = new XMLHttpRequest();
+    xhr.open("GET", "https://api-sitemap.maskoding.com/?url="+getUrl, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4) {
+        if(xhr.status == 200) {
+            try {
+            var obj = JSON.parse(xhr.responseText).dataUrl.split("\n");
+            var dbFix='["'+obj.join('","')+'"]';
+            var format=`  "0":{
+    "listLink":`+dbFix+`,
+    "setting":{
+      "title":{
+        "selector":".post-title.entry-title",
+        "typeSelector":"all",
+        "numberSelectorAll":0,
+        "targetSelector":"innerText",
+        "nameAttr":""
+      },
+      "description":{
+        "selector":"[name=description]",
+        "typeSelector":"all",
+        "numberSelectorAll":0,
+        "targetSelector":"valueAttr",
+        "nameAttr":"content"
+      },
+      "content":{
+        "selector":"#body-post-it",
+        "typeSelector":"all",
+        "numberSelectorAll":0,
+        "targetSelector":"innerHTML",
+        "nameAttr":""
+      },
+      "image":{
+        "selector":"[rel=image_src]",
+        "typeSelector":"all",
+        "numberSelectorAll":0,
+        "targetSelector":"valueAttr",
+        "nameAttr":"href"
+      },
+      "datePublish":{
+        "selector":"[itemprop=datePublished]",
+        "typeSelector":"all",
+        "numberSelectorAll":0,
+        "targetSelector":"valueAttr",
+        "nameAttr":"content"
+      }
+    }
+  }`;
+            document.getElementById("outLink").value=format;
+            } catch(e){
+              document.getElementById("outLink").setAttribute("placeholder",e+`
+
+Respons :
+`+xhr.responseText+`
+`);
+            };
+          };
+      };
+    };
+    xhr.send();
+});  
+
+document.getElementById("replace").addEventListener("click",function(){
+  var re = new RegExp(document.getElementById("inDomain").value)+"g";
+  document.getElementById("outLink").value=document.getElementById("outLink").value.replace(eval(re),"");
+});  
+
+document.getElementById("copy").addEventListener("click",function(){
+  document.getElementById("outLink").select();
+  document.execCommand("copy");
+});  
+</script>
+  </body>
+</html>
