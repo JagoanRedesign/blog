@@ -9,6 +9,12 @@
       "reg_date": "today",
       "exp_date": "nanti"
     }
+{
+      "name": "buyer 3",
+      "domain": "demoduta.blogspot.com",
+      "reg_date": "today",
+      "exp_date": "nanti"
+    }
     
   ]
 }
