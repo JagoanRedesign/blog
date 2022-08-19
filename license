@@ -5,15 +5,10 @@
   "member": [
     {
       "name": "buyer 2",
-      "domain": "aku.blogspot.com",
-      "reg_date": "today",
-      "exp_date": "nanti"
-    }
-    {
-      "name": "buyer 3",
       "domain": "www.dutabloger.my.id",
       "reg_date": "today",
       "exp_date": "nanti"
     }
+    
   ]
 }
